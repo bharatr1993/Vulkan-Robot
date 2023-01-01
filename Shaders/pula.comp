@@ -1,0 +1,52 @@
+#version 450
+
+//Assume constant base scale of 1/25.0f
+
+#define pi 3.14159265359
+
+struct Particle
+{
+    vec2 position;
+    vec2 velocity;
+    vec2 radius;
+    vec2 offset;
+};
+
+// Binding 0 : Position storage buffer
+layout(std140, set=0, binding = 0) buffer Pos
+{
+    Particle particles[];
+};
+
+layout(std140, set=1, binding = 0) uniform miscBuf
+{
+    vec2 totalcount;
+    vec2 fElapsedTime;
+    vec2 mousePos;
+}miscBuffer;
+
+layout (local_size_x = 64) in;
+
+void main() {
+
+    uint index = gl_GlobalInvocationID.x;
+    // Don't try to write beyond particle count
+    if (index >= miscBuffer.totalcount.x)
+        return;
+
+    if(((particles[index].position.x+0.05*particles[index].offset.x)<1.0f) && ((particles[index].position.x+0.05*particles[index].offset.x)>-1.0f) && ((particles[index].position.y+0.05*particles[index].offset.y)<1.5f) && ((particles[index].position.y+0.05*particles[index].offset.y)>-1.5f))
+    {
+        if(particles[index].velocity.y<0.7f)
+        particles[index].velocity.y += 0.25f * miscBuffer.fElapsedTime.x;
+        particles[index].position.y += particles[index].velocity.y*miscBuffer.fElapsedTime.x;
+    }
+    else
+    {
+        particles[index].position.x = miscBuffer.mousePos.x;
+        particles[index].position.y = miscBuffer.mousePos.y;
+        particles[index].velocity.y = 0.1f;
+    }
+
+
+
+}
